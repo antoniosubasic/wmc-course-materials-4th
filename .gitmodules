@@ -1,3 +1,6 @@
 [submodule "002_cdi"]
 	path = 002_cdi
 	url = git@github.com:2526-wmc-4ahif/hw-cdi-1-antoniosubasic.git
+[submodule "003_rest_with_db"]
+	path = 003_rest_with_db
+	url = git@github.com:2526-wmc-4ahif/hw-rest-with-db-antoniosubasic.git
