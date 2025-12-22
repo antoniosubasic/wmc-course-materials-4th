@@ -1,9 +1,11 @@
 package at.htl.resources;
 
+import java.util.Map;
 import java.util.UUID;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 import at.htl.entities.Message;
 import at.htl.services.EventBusService;
+import at.htl.services.MessageService;
 import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -18,6 +20,9 @@ public class ConnectionResource {
     @Inject
     EventBusService bus;
 
+    @Inject
+    MessageService messageService;
+
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public String register() {
@@ -27,11 +32,11 @@ public class ConnectionResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public void sendMessage(Message message) {
-        // Create a message
-        // Publish message via SSE to all connected clients
+        messageService.create(message);
+        bus.publish(Map.of("userId", message.getUserId(), "message", message.getText(), "timestamp",
+                message.getTimestamp()));
     }
 
-    // SSE Events...
     @GET
     @Path("/events")
     @Produces(MediaType.SERVER_SENT_EVENTS)

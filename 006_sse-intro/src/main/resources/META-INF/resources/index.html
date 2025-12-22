@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Quarkus Chat (SSE)</title>
+        <style>
+            body {
+                font-family: Inter, Arial, Helvetica, sans-serif;
+                margin: 2em;
+            }
+
+            textarea {
+                width: 50vw;
+                height: 300px;
+            }
+
+            #messageText {
+                width: 40vw;
+            }
+
+            input,
+            button {
+                margin: 0.25em 0;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h2>Quarkus Chat (SSE)</h2>
+
+        <!-- Connection -->
+        <div>
+            <label>
+                Server URL:
+                <input id="serverUrl" value="http://localhost:8080" />
+            </label>
+            <button onclick="connect()">Connect</button>
+        </div>
+
+        <!-- Messages -->
+        <textarea id="messages" readonly></textarea>
+
+        <!-- Send message -->
+        <div>
+            <label>
+                User ID:
+                <input id="userId" placeholder="user-id" readonly />
+            </label>
+            <br />
+            <label>
+                Message:
+                <input id="messageText" />
+            </label>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <script>
+            let eventSource = null;
+            let userId = null;
+
+            // log system-messages in the textarea
+            function log(msg) {
+                const ta = document.getElementById("messages");
+                ta.value += msg + "\n";
+                ta.scrollTop = ta.scrollHeight;
+            }
+
+            // connect to the server, retrieve message-history and register SSE
+            async function connect() {
+                const baseUrl = document.getElementById("serverUrl").value;
+
+                await registerConnection(baseUrl);
+                await loadHistory(baseUrl);
+                await registerSse(baseUrl);
+            }
+
+            // register client with the server (get ID)
+            async function registerConnection(baseUrl) {
+                const res = await fetch(baseUrl + "/connections");
+                userId = await res.text();
+                document.getElementById("userId").value = userId;
+
+                log("Connected as " + userId);
+            }
+
+            // retrieve chat-history
+            async function loadHistory(baseUrl) {
+                const historyRes = await fetch(baseUrl + "/messages");
+                const history = await historyRes.json();
+
+                history.forEach((m) => {
+                    log(`[${m.timestamp}] ${m.userId}: ${m.text}`);
+                });
+
+                log("---- live messages ----");
+            }
+
+            // register SSE bus
+            async function registerSse(baseUrl) {
+                eventSource = new EventSource(baseUrl + "/connections/events");
+
+                eventSource.onmessage = (e) => {
+                    const evt = JSON.parse(e.data);
+                    log(`[${evt.timestamp}] ${evt.userId}: ${evt.message}`);
+                };
+
+                eventSource.onerror = (e) => {
+                    log("SSE connection error");
+                    eventSource.close();
+                };
+            }
+
+            // send message
+            async function sendMessage() {
+                const baseUrl = document.getElementById("serverUrl").value;
+                const text = document.getElementById("messageText").value;
+
+                if (!text) return;
+
+                const payload = {
+                    userId: userId,
+                    text: text,
+                    timestamp: new Date().toISOString(),
+                };
+
+                console.log(payload);
+                await fetch(baseUrl + "/connections", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                document.getElementById("messageText").value = "";
+            }
+        </script>
+    </body>
+</html>
