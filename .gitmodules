@@ -10,3 +10,6 @@
 [submodule "005_hw_quarkus_backend"]
 	path = 005_hw_quarkus_backend
 	url = git@github.com:2526-wmc-4ahif/hw-quarkus-backend-1-antoniosubasic.git
+[submodule "007_hw_quarkus_backend_2"]
+	path = 007_hw_quarkus_backend_2
+	url = git@github.com:2526-wmc-4ahif/hw-quarkus-backend-2-antoniosubasic.git
